@@ -188,8 +188,7 @@ with open(csv_name, newline='') as csv_file:
 
         process_csv_row_object(csv_row_object)
 
-coin_market_cap_data = coin_market_cap.get_coin_value(currency_for_results, native_currency)
-current_coin_value = coin_market_cap_data['data'][currency_for_results]['quote'][native_currency]['price']
+current_coin_value = coin_market_cap.get_current_coin_price(currency_for_results, native_currency)
 
 coin_results = processed_crypto_list[currency_for_results]
 
