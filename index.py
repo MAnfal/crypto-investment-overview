@@ -5,8 +5,8 @@ import json
 from coin_market_cap import CoinMarketCap
 
 processed_crypto_list = {}
-
 liquidated_currency = {}
+dca_dictionary = {}
 
 currency_for_results = input("Please provide the name of currency to show results for: ")
 
@@ -28,6 +28,13 @@ def add_crypto_key_if_absent(crypto_key):
 def add_liquidated_currency_key_if_absent(currency_key):
     if currency_key not in liquidated_currency:
         liquidated_currency[currency_key] = 0
+
+def add_dca_key_if_absent(crypto_key):
+    if crypto_key not in dca_dictionary:
+        dca_dictionary[crypto_key] = {
+            'fiat_invested': 0,
+            'number_of_coins_purchased': 0
+        }
 
 def process_viban_purchase(row: CSVRow):
     crypto_currency_purchased = row.to_currency
@@ -120,6 +127,18 @@ def process_crypto_deposit(row: CSVRow):
 
     processed_crypto_list[crypto_currency_received]['fiat_invested_outside_cdc'] -= fiat_amount
 
+def process_dca_record(row: CSVRow):
+    # This value will be in - since it is deducted
+    fiat_invested = -1 * row.amount
+
+    crypto_purchased = row.to_currency
+    coins_purchased = row.to_amount
+
+    add_dca_key_if_absent(crypto_purchased)
+
+    dca_dictionary[crypto_purchased]['fiat_invested'] += fiat_invested
+    dca_dictionary[crypto_purchased]['number_of_coins_purchased'] += coins_purchased
+
 def process_csv_row_object(row: CSVRow):
     if row.transaction_description == 'viban_purchase':
         process_viban_purchase(row)
@@ -152,6 +171,9 @@ def process_csv_row_object(row: CSVRow):
 
     if row.transaction_description == 'crypto_deposit':
         process_crypto_deposit(row)
+
+    if row.transaction_description in ['viban_purchase']:
+        process_dca_record(row)
 
 with open(csv_name, newline='') as csv_file:
     spam_reader = csv.reader(csv_file, delimiter=',')
@@ -191,6 +213,7 @@ with open(csv_name, newline='') as csv_file:
 current_coin_value = coin_market_cap.get_current_coin_price(currency_for_results, native_currency)
 
 coin_results = processed_crypto_list[currency_for_results]
+dca_results = dca_dictionary[currency_for_results]
 
 # reformat values
 coin_results['coin_amount'] = coin_results['coin_amount'] if coin_results['coin_amount'] > 0 else 0 
@@ -213,7 +236,9 @@ coin_results['total_coins'] = "{:.4f} {}".format(coin_results['total_coins'], cu
 coin_results['total_fiat_invested'] = "{} {}".format(round(coin_results['total_fiat_invested'], 2), native_currency)
 coin_results['current_fiat_value'] = "{} {}".format(round(coin_results['current_fiat_value'], 2), native_currency)
 coin_results['total_percent_p/l_fiat'] = "{}%".format(round(coin_results['total_percent_p/l_fiat'], 2))
+coin_results['average_buying_price_per_coin'] = "{} {}".format(round((dca_results['fiat_invested'] / dca_results['number_of_coins_purchased']), 2), native_currency)
 
+print(dca_results)
 print(json.dumps(processed_crypto_list[currency_for_results], indent=2))
 
 # print(json.dumps(liquidated_currency, indent=2))
