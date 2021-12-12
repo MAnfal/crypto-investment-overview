@@ -238,7 +238,6 @@ coin_results['current_fiat_value'] = "{} {}".format(round(coin_results['current_
 coin_results['total_percent_p/l_fiat'] = "{}%".format(round(coin_results['total_percent_p/l_fiat'], 2))
 coin_results['average_buying_price_per_coin'] = "{} {}".format(round((dca_results['fiat_invested'] / dca_results['number_of_coins_purchased']), 2), native_currency)
 
-print(dca_results)
 print(json.dumps(processed_crypto_list[currency_for_results], indent=2))
 
 # print(json.dumps(liquidated_currency, indent=2))
